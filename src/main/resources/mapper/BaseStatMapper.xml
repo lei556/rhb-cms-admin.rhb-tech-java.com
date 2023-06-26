@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.api.mapper.BaseStatMapper">
+
+
+    <select id="getByDay" resultType="java.lang.String">
+
+        select IFNULL(${countOrTimeSql},0) as resultR from
+            (SELECT
+                 DATE_FORMAT(a.start_time,'%Y-%m-%d') as  start_time,
+                 TIMESTAMPDIFF( SECOND, a.start_time, a.end_time ) second_time,
+                 a.patient_id,
+                 a.task_id,
+                 c.sport_mode,
+                 c.sport_way,
+                 c.up_down
+             FROM
+                 limbs_traininglogs a
+                     INNER JOIN limbs_task b ON a.task_id = b.id
+                     INNER JOIN limbs_mode c ON b.mode_id = c.id ) tmp where 1=1 and start_time = #{date} ${stypeSql}
+
+    </select>
+    <select id="getByMonths" resultType="java.lang.String">
+        select IFNULL(${countOrTimeSql},0) as resultR from
+            (SELECT
+                 DATE_FORMAT(a.start_time,'%Y-%m') as  start_time,
+                 TIMESTAMPDIFF( SECOND, a.start_time, a.end_time ) second_time,
+                 a.patient_id,
+                 a.task_id,
+                 c.sport_mode,
+                 c.sport_way,
+                 c.up_down
+             FROM
+                 limbs_traininglogs a
+                     INNER JOIN limbs_task b ON a.task_id = b.id
+                     INNER JOIN limbs_mode c ON b.mode_id = c.id ) tmp where 1=1 and start_time = #{date} ${stypeSql}
+
+    </select>
+    <select id="getPatientCountByTimeRange" resultType="java.lang.Integer">
+        select count(1) from patient_patient where  #{startDocTime} <![CDATA[<=]]>  doctor_time and doctor_time <![CDATA[<=]]> #{endDocTime}
+    </select>
+    <select id="getTrianPatientCountByTimeRange" resultType="java.lang.Integer">
+        select count(1)
+        from (select patient_id from limbs_traininglogs where 1 = 1 and #{startTrainLogTime} <![CDATA[<=]]>  start_time and start_time <![CDATA[<=]]> #{endTrainLogTime} GROUP BY patient_id) tmp
+    </select>
+    <select id="getTrianAllCountByTimeRange" resultType="java.lang.Integer">
+        select count(1) from limbs_traininglogs where 1 = 1 and #{startTrainLogTime} <![CDATA[<=]]>  start_time and start_time <![CDATA[<=]]> #{endTrainLogTime}
+    </select>
+    <select id="getTrianAllSecondByTimeRange" resultType="java.lang.Integer">
+        select IFNULL(sum(second_time),0) as sun_second_time
+        from (select TIMESTAMPDIFF(SECOND, a.start_time, a.end_time) second_time
+              from limbs_traininglogs a
+              where 1 = 1
+                and #{startTrainLogTime} <![CDATA[<=]]> a.start_time
+                and a.start_time <![CDATA[<=]]> #{endTrainLogTime}) tmp
+    </select>
+</mapper>
